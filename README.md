@@ -12,4 +12,7 @@ Its probably not good enough to use, and I have actually not built anything with
 - Create CLI for genertaing classes and templates.
 - Make use of a config file instead of hard coding directory variables.
 - Netlify integration.
+- Generate sitemap.xml
+- Genrate index.xml
+- Add static folder directory
 
