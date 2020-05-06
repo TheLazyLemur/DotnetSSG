@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using RazorEngine;
 using RazorEngine.Configuration;
 using RazorEngine.Templating;
+using RazorEngine.Text;
 
 namespace Generate
 {
@@ -12,42 +14,51 @@ namespace Generate
         private const string SiteName = "MyCustomSSG";
         private const string TemplateDirectory = "./Templates/";
         private static readonly string OutputDirectory = $"/var/www/html/{SiteName}/";
-        
+
         static void Main(string[] args)
         {
             ConfigureRazorEngine();
-            Build(PostsController.GetPosts().ToList());
 
-            ConfigureRazorEngine();
-            Build(FaqsController.GetFaqs().ToList());
+            var header = Engine.Razor.RunCompile(File.ReadAllText($"{TemplateDirectory}header.html"), "header");
+            var footer = Engine.Razor.RunCompile(File.ReadAllText($"{TemplateDirectory}footer.html"), "footer");
+            BuildIndexPage(header, footer);
 
-            ConfigureRazorEngine();
-            Build(ServicesController.GetServices().ToList());
+            Build(PostsController.GetPosts().ToList(), header, footer);
+
+            Build(FaqsController.GetFaqs().ToList(), header, footer);
+
+            Build(ServicesController.GetServices().ToList(), header, footer);
         }
 
         private static void ConfigureRazorEngine()
         {
-            var config = new TemplateServiceConfiguration {Language = Language.CSharp};
+            var config = new TemplateServiceConfiguration
+            {
+                Language = Language.CSharp,
+                EncodedStringFactory = new HtmlEncodedStringFactory(),
+            };
             var razorEngineService = RazorEngineService.Create(config);
             Engine.Razor = razorEngineService;
         }
 
-        public static void BuildCollection(string collectionName, string entryName, string htmlFromTemplate)
+        public static void BuildCollection(string collectionName, string entryName, string htmlFromTemplate,
+            string header, string footer)
         {
-            var header = File.ReadAllText($"{TemplateDirectory}header.html");
-            var footer = File.ReadAllText($"{TemplateDirectory}footer.html");
-            var index = File.ReadAllText($"{TemplateDirectory}index.html");
-
             Directory.CreateDirectory($"{OutputDirectory}{collectionName + "s"}/{entryName}");
 
             var fs = File.Create($"{OutputDirectory}{collectionName + "s"}/{entryName}/index.html");
             fs.Close();
-            File.WriteAllText($"{OutputDirectory}index.html", header + index + footer);
-            File.WriteAllText($"{OutputDirectory}{collectionName + "s"}/{entryName}/index.html",
-                header + htmlFromTemplate + footer);
+
+            File.WriteAllText($"{OutputDirectory}{collectionName + "s"}/{entryName}/index.html", htmlFromTemplate);
         }
 
-        public static void Build<T>(List<T> items)
+        private static void BuildIndexPage(string header, string footer)
+        {
+            var index = Engine.Razor.RunCompile(File.ReadAllText($"{TemplateDirectory}index.html"), "index"); ;
+            File.WriteAllText($"{OutputDirectory}index.html", index);
+        }
+
+        public static void Build<T>(List<T> items, string header, string footer)
         {
             var item = items;
             var template = File.ReadAllText($"{TemplateDirectory}/{typeof(T).Name.ToLower()}.html");
@@ -55,8 +66,8 @@ namespace Generate
             foreach (var i in item)
             {
                 var n = i as BaseModel;
-                var result = Engine.Razor.RunCompile(template, "templateKey", typeof(T), i);
-                if (n != null) BuildCollection(typeof(T).Name, n.GetSlug(), result);
+                var result = Engine.Razor.RunCompile(template, Guid.NewGuid().ToString(), typeof(T), i);
+                if (n != null) BuildCollection(typeof(T).Name, n.GetSlug(), result, header, footer);
             }
         }
     }
