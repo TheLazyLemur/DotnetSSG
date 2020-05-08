@@ -4,7 +4,7 @@ namespace Generate
 {
     class PostsController
     {
-        public static IEnumerable<Post> GetPosts()
+        public static IEnumerable<Post> Get()
         {
             return new List<Post>()
             {

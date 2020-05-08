@@ -11,28 +11,46 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Templates\faq.html" />
-      <Content Include="Templates\faq.html">
+      <Content Include="Templates\service\service.html">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
+      <Content Include="Templates\service\servicelist.html">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Templates\faq.html" />
       <None Remove="Templates\footer.html" />
-      <Content Include="Templates\footer.html">
+      <Content Include="Templates\faq\faq.html">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <Content Include="Templates\faq\faqlist.html">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
       <None Remove="Templates\header.html" />
-      <Content Include="Templates\header.html">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
       <None Remove="Templates\index.html" />
       <Content Include="Templates\index.html">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
       <None Remove="Templates\post.html" />
-      <Content Include="Templates\post.html">
+      <None Remove="Templates\service.html" />
+      <Content Include="Templates\post\post.html">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
-      <None Remove="Templates\service.html" />
-      <Content Include="Templates\service.html">
+      <Content Include="Templates\post\postlist.html">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <Content Include="Templates\project\project.html">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <Content Include="Templates\project\projectlist.html">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Templates\single.html" />
+      <None Remove="Templates\project.html" />
+      <None Remove="Templates\servicelist.html" />
+      <None Remove="Templates\projectlist.html" />
+      <None Remove="Templates\postlist.html" />
+      <None Remove="Templates\layout.html" />
+      <Content Include="Templates\layout.html">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
     </ItemGroup>

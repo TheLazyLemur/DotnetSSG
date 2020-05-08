@@ -1,0 +1,5 @@
+@foreach(var i in Model.items){
+    <h1><a href="./@i.GetSlug().ToLower()">@i.GetSlug()</a></h1>
+}
+
+<br>

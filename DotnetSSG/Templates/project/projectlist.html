@@ -1,0 +1,5 @@
+<h1>Hello World</h1>
+
+@foreach(var i in Model.items){
+    <div><a href="./@i.GetSlug().ToLower()">@i.Title</a>  </div>
+}

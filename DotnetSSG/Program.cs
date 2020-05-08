@@ -17,17 +17,26 @@ namespace Generate
 
         static void Main(string[] args)
         {
+            BuildTheWebsite();
+        }
+
+        private static void BuildTheWebsite()
+        {
             ConfigureRazorEngine();
 
-            var header = Engine.Razor.RunCompile(File.ReadAllText($"{TemplateDirectory}header.html"), "header");
-            var footer = Engine.Razor.RunCompile(File.ReadAllText($"{TemplateDirectory}footer.html"), "footer");
-            BuildIndexPage(header, footer);
+            Engine.Razor.AddTemplate("layout", File.ReadAllText($"{TemplateDirectory}layout.html"));
 
-            Build(PostsController.GetPosts().ToList(), header, footer);
+            //Build index.html
+            BuildIndexPage();
+            //Build single pages (about)
 
-            Build(FaqsController.GetFaqs().ToList(), header, footer);
+            //Build Collection Pages
+            BuildCollection(PostsController.Get().ToList());
+            BuildCollection(FaqsController.Get().ToList());
+            BuildCollection(ServicesController.Get().ToList());
+            BuildCollection(ProjectsController.Get().ToList());
 
-            Build(ServicesController.GetServices().ToList(), header, footer);
+            //Build sitemap.xml
         }
 
         private static void ConfigureRazorEngine()
@@ -41,33 +50,70 @@ namespace Generate
             Engine.Razor = razorEngineService;
         }
 
-        public static void BuildCollection(string collectionName, string entryName, string htmlFromTemplate,
-            string header, string footer)
+        private static void BuildIndexPage()
         {
-            Directory.CreateDirectory($"{OutputDirectory}{collectionName + "s"}/{entryName}");
+            // Build list page
+            var index = Guid.NewGuid().ToString();
+            Engine.Razor.AddTemplate(index, $@"@{{Layout = ""layout"";}}{File.ReadAllText($"{TemplateDirectory}index.html")}");
+            Engine.Razor.Compile(index);
+            var result = Engine.Razor.Run(index);
+            File.WriteAllText($"{OutputDirectory}index.html", result);
+        }
+        
+        public static void BuildCollection<T>(List<T> items)
+        {
+            var template =
+                File.ReadAllText($"{TemplateDirectory}/{typeof(T).Name.ToLower()}/{typeof(T).Name.ToLower()}.html");
+            var collectionName = typeof(T).Name.ToLower();
+            Directory.CreateDirectory($"{OutputDirectory}{typeof(T).Name.ToLower() + "s"}");
 
-            var fs = File.Create($"{OutputDirectory}{collectionName + "s"}/{entryName}/index.html");
-            fs.Close();
-
-            File.WriteAllText($"{OutputDirectory}{collectionName + "s"}/{entryName}/index.html", htmlFromTemplate);
+            BuildListPageTemplates(items, collectionName);
+            BuildSinglePageTemplates(items, template, collectionName);
         }
 
-        private static void BuildIndexPage(string header, string footer)
+        private static void BuildListPageTemplates<T>(List<T> items, string collectionName)
         {
-            var index = Engine.Razor.RunCompile(File.ReadAllText($"{TemplateDirectory}index.html"), "index"); ;
-            File.WriteAllText($"{OutputDirectory}index.html", index);
-        }
+            var listTemplate =
+                File.ReadAllText(
+                    $"{TemplateDirectory}{collectionName.ToLower()}/{collectionName.ToLower()}list.html");
 
-        public static void Build<T>(List<T> items, string header, string footer)
-        {
-            var item = items;
-            var template = File.ReadAllText($"{TemplateDirectory}/{typeof(T).Name.ToLower()}.html");
-
-            foreach (var i in item)
+            var listHtml = Engine.Razor.RunCompile(listTemplate, Guid.NewGuid().ToString(), null, new
             {
-                var n = i as BaseModel;
-                var result = Engine.Razor.RunCompile(template, Guid.NewGuid().ToString(), typeof(T), i);
-                if (n != null) BuildCollection(typeof(T).Name, n.GetSlug(), result, header, footer);
+                items
+            });
+
+            // Build list page
+            var listGuid = Guid.NewGuid().ToString();
+            Engine.Razor.AddTemplate(listGuid, $@"@{{Layout = ""layout"";}}{listHtml}");
+            Engine.Razor.Compile(listGuid);
+            var result = Engine.Razor.Run(listGuid);
+            var fileStream = File.Create($"{OutputDirectory}{collectionName.ToLower() + "s"}/index.html");
+            fileStream.Close();
+            File.WriteAllText($"{OutputDirectory}{collectionName.ToLower() + "s"}/index.html", result);
+        }
+
+        private static void BuildSinglePageTemplates<T>(List<T> allItems, string template, string collectionName)
+        {
+            // Loop through all items in collection
+            foreach (var item in allItems)
+            {
+                var model = item as BaseModel;
+                var singleHtml = Engine.Razor.RunCompile(template, Guid.NewGuid().ToString(), typeof(T), item);
+                
+                if(model == null) continue;
+                var entryName = model.GetSlug().ToLower();
+
+                Directory.CreateDirectory($"{OutputDirectory}{typeof(T).Name.ToLower() + "s"}/{entryName}");
+                
+                // Build single pages
+                var singleGuid = Guid.NewGuid().ToString();
+                Engine.Razor.AddTemplate(singleGuid, $@"@{{Layout = ""layout"";}}{singleHtml}");
+                Engine.Razor.Compile(singleGuid);
+                var resultSingle = Engine.Razor.Run(singleGuid);
+                var fileStream = File.Create($"{OutputDirectory}{collectionName.ToLower() + "s"}/{entryName}/index.html");
+                fileStream.Close();
+                File.WriteAllText($"{OutputDirectory}{collectionName.ToLower() + "s"}/{entryName}/index.html",
+                    resultSingle);
             }
         }
     }
